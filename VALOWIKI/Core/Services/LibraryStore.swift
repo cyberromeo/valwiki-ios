@@ -52,32 +52,32 @@ final class LibraryStore {
         state = .loading
         failedEndpoints.removeAll()
 
-        async let a: Void = loadList(into: \.agents, "agents?isPlayableCharacter=true")
-        async let b: Void = loadList(into: \.maps, "maps")
-        async let c: Void = loadList(into: \.weapons, "weapons")
-        async let d: Void = loadList(into: \.skins, "weapons/skins")
-        async let e: Void = loadList(into: \.skinChromas, "weapons/skinchromas")
-        async let f: Void = loadList(into: \.skinLevels, "weapons/skinlevels")
+        async let a: Void = loadList("agents?isPlayableCharacter=true") { $0.agents = $1 }
+        async let b: Void = loadList("maps") { $0.maps = $1 }
+        async let c: Void = loadList("weapons") { $0.weapons = $1 }
+        async let d: Void = loadList("weapons/skins") { $0.skins = $1 }
+        async let e: Void = loadList("weapons/skinchromas") { $0.skinChromas = $1 }
+        async let f: Void = loadList("weapons/skinlevels") { $0.skinLevels = $1 }
 
-        async let g: Void = loadList(into: \.buddies, "buddies")
-        async let h: Void = loadList(into: \.buddyLevels, "buddies/levels")
-        async let i: Void = loadList(into: \.playerCards, "playercards")
-        async let j: Void = loadList(into: \.sprays, "sprays")
-        async let k: Void = loadList(into: \.sprayLevels, "sprays/levels")
-        async let l: Void = loadList(into: \.titles, "playertitles")
+        async let g: Void = loadList("buddies") { $0.buddies = $1 }
+        async let h: Void = loadList("buddies/levels") { $0.buddyLevels = $1 }
+        async let i: Void = loadList("playercards") { $0.playerCards = $1 }
+        async let j: Void = loadList("sprays") { $0.sprays = $1 }
+        async let k: Void = loadList("sprays/levels") { $0.sprayLevels = $1 }
+        async let l: Void = loadList("playertitles") { $0.titles = $1 }
 
-        async let m: Void = loadList(into: \.currencies, "currencies")
-        async let n: Void = loadList(into: \.gameModes, "gamemodes")
-        async let o: Void = loadList(into: \.gear, "gear")
-        async let p: Void = loadList(into: \.seasons, "seasons")
-        async let q: Void = loadList(into: \.contracts, "contracts")
-        async let r: Void = loadList(into: \.themes, "themes")
+        async let m: Void = loadList("currencies") { $0.currencies = $1 }
+        async let n: Void = loadList("gamemodes") { $0.gameModes = $1 }
+        async let o: Void = loadList("gear") { $0.gear = $1 }
+        async let p: Void = loadList("seasons") { $0.seasons = $1 }
+        async let q: Void = loadList("contracts") { $0.contracts = $1 }
+        async let r: Void = loadList("themes") { $0.themes = $1 }
 
-        async let s: Void = loadList(into: \.bundles, "bundles")
-        async let t: Void = loadList(into: \.ceremonies, "ceremonies")
-        async let u: Void = loadList(into: \.equippables, "gamemodes/equippables")
-        async let v: Void = loadList(into: \.contentTiers, "contenttiers")
-        async let w: Void = loadList(into: \.events, "events")
+        async let s: Void = loadList("bundles") { $0.bundles = $1 }
+        async let t: Void = loadList("ceremonies") { $0.ceremonies = $1 }
+        async let u: Void = loadList("gamemodes/equippables") { $0.equippables = $1 }
+        async let v: Void = loadList("contenttiers") { $0.contentTiers = $1 }
+        async let w: Void = loadList("events") { $0.events = $1 }
 
         async let x: Void = loadTierLists()
         async let y: Void = loadVersion()
@@ -103,9 +103,11 @@ final class LibraryStore {
         return response.data
     }
 
-    private func loadList<T: Decodable>(into keyPath: WritableKeyPath<LibraryStore, [T]>, _ path: String) async {
+    private func loadList<T: Decodable>(_ path: String,
+                                       assign: (LibraryStore, [T]) -> Void) async {
         do {
-            self[keyPath: keyPath] = try await fetchList(path)
+            let items = try await fetchList(path)
+            assign(self, items)
         } catch {
             failedEndpoints.append(path)
         }

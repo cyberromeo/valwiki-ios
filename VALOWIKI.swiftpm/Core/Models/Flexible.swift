@@ -37,4 +37,6 @@ struct LenientBox<T: Decodable>: Decodable {
     }
 }
 
+extension LenientBox: Equatable where T: Equatable {}
+
 extension LenientBox: Hashable where T: Hashable {}

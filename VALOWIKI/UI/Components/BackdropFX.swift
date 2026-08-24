@@ -56,18 +56,21 @@ struct DotMatrix: View {
 
     var body: some View {
         Canvas { context, size in
+            let spacingValue = spacing
             var row = 0
-            var y: CGFloat = spacing / 2
+            var y: CGFloat = spacingValue / 2
             while y < size.height {
-                var x: CGFloat = spacing / 2
+                var x: CGFloat = spacingValue / 2
                 while x < size.width {
-                    let wave = sin((Double(x) + Double(y) * 1.7) * 0.045 + Double(row) * 0.35)
-                    let radius = max(0.6, spacing * 0.24 * (0.6 + wave * 0.8))
+                    let phase: Double = (Double(x) + Double(y) * 1.7) * 0.045 + Double(row) * 0.35
+                    let wave: Double = sin(phase)
+                    let radius: CGFloat = max(0.6, spacingValue * 0.24 * CGFloat(0.6 + wave * 0.8))
                     let rect = CGRect(x: x - radius / 2, y: y - radius / 2, width: radius, height: radius)
-                    context.fill(Path(ellipseIn: rect), with: .color(color.opacity(strength * (0.5 + wave * 0.5))))
-                    x += spacing
+                    let shade: Double = strength * (0.5 + wave * 0.5)
+                    context.fill(Path(ellipseIn: rect), with: .color(color.opacity(shade)))
+                    x += spacingValue
                 }
-                y += spacing
+                y += spacingValue
                 row += 1
             }
         }

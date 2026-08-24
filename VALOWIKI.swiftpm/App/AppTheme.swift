@@ -36,6 +36,21 @@ extension Color {
     static let line = Color.white.opacity(0.08)
 }
 
+/// Lets `.cream`, `.valRed`, `.dim` … resolve in `foregroundStyle`,
+/// `fill`, `stroke` and every other `some ShapeStyle` context.
+extension ShapeStyle where Self == Color {
+    static var ink: Color { .ink }
+    static var panel: Color { .panel }
+    static var panelHi: Color { .panelHi }
+    static var valRed: Color { .valRed }
+    static var cream: Color { .cream }
+    static var mint: Color { .mint }
+    static var gold: Color { .gold }
+    static var dim: Color { .dim }
+    static var faint: Color { .faint }
+    static var line: Color { .line }
+}
+
 extension Font {
     static func display(_ size: CGFloat, _ weight: UIFont.Weight = .black) -> Font {
         Font(UIFont.systemFont(ofSize: size, weight: weight, width: .condensed))
