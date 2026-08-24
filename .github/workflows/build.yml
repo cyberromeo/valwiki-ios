@@ -1,0 +1,54 @@
+name: Build Unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build & package unsigned IPA
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Toolchain info
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos || true
+
+      - name: Build (unsigned, device arch)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project VALOWIKI.xcodeproj \
+            -target VALOWIKI \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_REQUIRES_APP=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            VALIDATE_PRODUCT=NO
+
+      - name: Package IPA
+        run: |
+          APP=$(find build -type d -name "VALOWIKI.app" -path "*Release-iphoneos*" | head -n 1)
+          if [ -z "$APP" ]; then
+            echo "VALOWIKI.app not found"; find build -name "*.app" || true; exit 1
+          fi
+          echo "Found app bundle: $APP"
+          mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry VALOWIKI-unsigned.ipa Payload
+          ls -lh VALOWIKI-unsigned.ipa
+          unset APP
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VALOWIKI-unsigned-ipa
+          path: VALOWIKI-unsigned.ipa
+          if-no-files-found: error
