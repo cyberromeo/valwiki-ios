@@ -1,14 +1,14 @@
-// swift-tools-version: 5.9
+// swift-tools-version:5.7
 
 // VALOWIKI — Swift Playgrounds app package.
-// Open VALOWIKI.swiftpm in Swift Playgrounds (iPadOS 17+) or in Xcode 15+.
+// Open VALOWIKI.swiftpm in Swift Playgrounds (iPadOS 17+) or in Xcode 14+.
 
 import PackageDescription
 
 let package = Package(
     name: "VALOWIKI",
     platforms: [
-        .iOS(.v17)
+        .iOS("17.0")
     ],
     products: [
         .iOSApplication(
