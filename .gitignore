@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+swiftpm/
+
+# Swift Playgrounds / SPM
+.build/
+Package.resolved
+
+# Local drafts
+_archive_old_draft/
