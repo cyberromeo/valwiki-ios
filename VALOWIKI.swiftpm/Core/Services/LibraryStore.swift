@@ -52,32 +52,32 @@ final class LibraryStore {
         state = .loading
         failedEndpoints.removeAll()
 
-        async let a = load([Agent].self, "agents?isPlayableCharacter=true")
-        async let b = load([GameMap].self, "maps")
-        async let c = load([Weapon].self, "weapons")
-        async let d = load([WeaponSkin].self, "weapons/skins")
-        async let e = load([SkinChroma].self, "weapons/skinchromas")
-        async let f = load([SkinLevel].self, "weapons/skinlevels")
+        async let a = load(Agent.self, "agents?isPlayableCharacter=true")
+        async let b = load(GameMap.self, "maps")
+        async let c = load(Weapon.self, "weapons")
+        async let d = load(WeaponSkin.self, "weapons/skins")
+        async let e = load(SkinChroma.self, "weapons/skinchromas")
+        async let f = load(SkinLevel.self, "weapons/skinlevels")
 
-        async let g = load([Buddy].self, "buddies")
-        async let h = load([BuddyLevel].self, "buddies/levels")
-        async let i = load([PlayerCard].self, "playercards")
-        async let j = load([Spray].self, "sprays")
-        async let k = load([SprayLevel].self, "sprays/levels")
-        async let l = load([PlayerTitle].self, "playertitles")
+        async let g = load(Buddy.self, "buddies")
+        async let h = load(BuddyLevel.self, "buddies/levels")
+        async let i = load(PlayerCard.self, "playercards")
+        async let j = load(Spray.self, "sprays")
+        async let k = load(SprayLevel.self, "sprays/levels")
+        async let l = load(PlayerTitle.self, "playertitles")
 
-        async let m = load([Currency].self, "currencies")
-        async let n = load([GameMode].self, "gamemodes")
-        async let o = load([GearItem].self, "gear")
-        async let p = load([Season].self, "seasons")
-        async let q = load([Contract].self, "contracts")
-        async let r = load([SkinTheme].self, "themes")
+        async let m = load(Currency.self, "currencies")
+        async let n = load(GameMode.self, "gamemodes")
+        async let o = load(GearItem.self, "gear")
+        async let p = load(Season.self, "seasons")
+        async let q = load(Contract.self, "contracts")
+        async let r = load(SkinTheme.self, "themes")
 
-        async let s = load([ItemBundle].self, "bundles")
-        async let t = load([Ceremony].self, "ceremonies")
-        async let u = load([GameModeEquippable].self, "gamemodes/equippables")
-        async let v = load([ContentTier].self, "contenttiers")
-        async let w = load([EsportsEvent].self, "events")
+        async let s = load(ItemBundle.self, "bundles")
+        async let t = load(Ceremony.self, "ceremonies")
+        async let u = load(GameModeEquippable.self, "gamemodes/equippables")
+        async let v = load(ContentTier.self, "contenttiers")
+        async let w = load(EsportsEvent.self, "events")
 
         async let x = loadTierLists()
         async let y = loadVersion()
@@ -147,7 +147,8 @@ final class LibraryStore {
 
     private func loadVersion() async -> GameVersion? {
         do {
-            return try await fetchList("version")
+            let response: APIResponse<GameVersion> = try await ValorantAPI.fetch("version")
+            return response.data
         } catch {
             failedEndpoints.append("version")
             return nil
