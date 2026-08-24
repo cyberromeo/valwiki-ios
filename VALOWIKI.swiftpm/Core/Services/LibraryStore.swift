@@ -52,41 +52,65 @@ final class LibraryStore {
         state = .loading
         failedEndpoints.removeAll()
 
-        async let a: Void = loadList("agents?isPlayableCharacter=true") { $0.agents = $1 }
-        async let b: Void = loadList("maps") { $0.maps = $1 }
-        async let c: Void = loadList("weapons") { $0.weapons = $1 }
-        async let d: Void = loadList("weapons/skins") { $0.skins = $1 }
-        async let e: Void = loadList("weapons/skinchromas") { $0.skinChromas = $1 }
-        async let f: Void = loadList("weapons/skinlevels") { $0.skinLevels = $1 }
+        async let a = load([Agent].self, "agents?isPlayableCharacter=true")
+        async let b = load([GameMap].self, "maps")
+        async let c = load([Weapon].self, "weapons")
+        async let d = load([WeaponSkin].self, "weapons/skins")
+        async let e = load([SkinChroma].self, "weapons/skinchromas")
+        async let f = load([SkinLevel].self, "weapons/skinlevels")
 
-        async let g: Void = loadList("buddies") { $0.buddies = $1 }
-        async let h: Void = loadList("buddies/levels") { $0.buddyLevels = $1 }
-        async let i: Void = loadList("playercards") { $0.playerCards = $1 }
-        async let j: Void = loadList("sprays") { $0.sprays = $1 }
-        async let k: Void = loadList("sprays/levels") { $0.sprayLevels = $1 }
-        async let l: Void = loadList("playertitles") { $0.titles = $1 }
+        async let g = load([Buddy].self, "buddies")
+        async let h = load([BuddyLevel].self, "buddies/levels")
+        async let i = load([PlayerCard].self, "playercards")
+        async let j = load([Spray].self, "sprays")
+        async let k = load([SprayLevel].self, "sprays/levels")
+        async let l = load([PlayerTitle].self, "playertitles")
 
-        async let m: Void = loadList("currencies") { $0.currencies = $1 }
-        async let n: Void = loadList("gamemodes") { $0.gameModes = $1 }
-        async let o: Void = loadList("gear") { $0.gear = $1 }
-        async let p: Void = loadList("seasons") { $0.seasons = $1 }
-        async let q: Void = loadList("contracts") { $0.contracts = $1 }
-        async let r: Void = loadList("themes") { $0.themes = $1 }
+        async let m = load([Currency].self, "currencies")
+        async let n = load([GameMode].self, "gamemodes")
+        async let o = load([GearItem].self, "gear")
+        async let p = load([Season].self, "seasons")
+        async let q = load([Contract].self, "contracts")
+        async let r = load([SkinTheme].self, "themes")
 
-        async let s: Void = loadList("bundles") { $0.bundles = $1 }
-        async let t: Void = loadList("ceremonies") { $0.ceremonies = $1 }
-        async let u: Void = loadList("gamemodes/equippables") { $0.equippables = $1 }
-        async let v: Void = loadList("contenttiers") { $0.contentTiers = $1 }
-        async let w: Void = loadList("events") { $0.events = $1 }
+        async let s = load([ItemBundle].self, "bundles")
+        async let t = load([Ceremony].self, "ceremonies")
+        async let u = load([GameModeEquippable].self, "gamemodes/equippables")
+        async let v = load([ContentTier].self, "contenttiers")
+        async let w = load([EsportsEvent].self, "events")
 
-        async let x: Void = loadTierLists()
-        async let y: Void = loadVersion()
+        async let x = loadTierLists()
+        async let y = loadVersion()
 
-        _ = await (a, b, c, d, e, f)
-        _ = await (g, h, i, j, k, l)
-        _ = await (m, n, o, p, q, r)
-        _ = await (s, t, u, v, w)
-        _ = await (x, y)
+        agents = await a ?? agents
+        maps = await b ?? maps
+        weapons = await c ?? weapons
+        skins = await d ?? skins
+        skinChromas = await e ?? skinChromas
+        skinLevels = await f ?? skinLevels
+
+        buddies = await g ?? buddies
+        buddyLevels = await h ?? buddyLevels
+        playerCards = await i ?? playerCards
+        sprays = await j ?? sprays
+        sprayLevels = await k ?? sprayLevels
+        titles = await l ?? titles
+
+        currencies = await m ?? currencies
+        gameModes = await n ?? gameModes
+        gear = await o ?? gear
+        seasons = await p ?? seasons
+        contracts = await q ?? contracts
+        themes = await r ?? themes
+
+        bundles = await s ?? bundles
+        ceremonies = await t ?? ceremonies
+        equippables = await u ?? equippables
+        contentTiers = await v ?? contentTiers
+        events = await w ?? events
+
+        tierLists = await x ?? tierLists
+        version = await y ?? version
 
         ContentTierMapper.register(contentTiers)
 
@@ -103,31 +127,30 @@ final class LibraryStore {
         return response.data
     }
 
-    private func loadList<T: Decodable>(_ path: String,
-                                       assign: (LibraryStore, [T]) -> Void) async {
+    private func load<T: Decodable>(_ type: T.Type, _ path: String) async -> [T]? {
         do {
-            let items = try await fetchList(path)
-            assign(self, items)
+            return try await fetchList(path)
         } catch {
             failedEndpoints.append(path)
+            return nil
         }
     }
 
-    private func loadTierLists() async {
+    private func loadTierLists() async -> [CompetitiveTierList]? {
         do {
-            let response: APIResponse<[CompetitiveTierList]> = try await ValorantAPI.fetch("competitivetiers")
-            tierLists = response.data
+            return try await fetchList("competitivetiers")
         } catch {
             failedEndpoints.append("competitivetiers")
+            return nil
         }
     }
 
-    private func loadVersion() async {
+    private func loadVersion() async -> GameVersion? {
         do {
-            let response: APIResponse<GameVersion> = try await ValorantAPI.fetch("version")
-            version = response.data
+            return try await fetchList("version")
         } catch {
             failedEndpoints.append("version")
+            return nil
         }
     }
 
