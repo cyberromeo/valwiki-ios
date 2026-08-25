@@ -95,6 +95,23 @@ struct UplinkFailedView: View {
                     .tracking(1.2)
                     .foregroundStyle(.dim)
                     .multilineTextAlignment(.center)
+                if let detail = store.lastErrorDetail {
+                    Text(detail)
+                        .font(.mono(8.5))
+                        .tracking(0.4)
+                        .foregroundStyle(.valRed)
+                        .lineSpacing(3)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.panel))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.valRed.opacity(0.4)))
+                        .padding(.horizontal, 8)
+                }
+                Text("CROSS-CHECK // OPEN valorant-api.com/v1/version IN SAFARI")
+                    .font(.mono(7.5))
+                    .tracking(1)
+                    .foregroundStyle(.faint)
+                    .multilineTextAlignment(.center)
                 Button {
                     Haptics.thud()
                     Task { await store.loadAll() }

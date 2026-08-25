@@ -15,6 +15,7 @@ final class LibraryStore {
 
     var state: UplinkState = .idle
     var failedEndpoints: [String] = []
+    var lastErrorDetail: String?
 
     var agents: [Agent] = []
     var maps: [GameMap] = []
@@ -51,6 +52,7 @@ final class LibraryStore {
     func loadAll() async {
         state = .loading
         failedEndpoints.removeAll()
+        lastErrorDetail = nil
 
         async let a = load(Agent.self, "agents?isPlayableCharacter=true")
         async let b = load(GameMap.self, "maps")
@@ -127,11 +129,18 @@ final class LibraryStore {
         return response.data
     }
 
+    private func recordFailure(_ path: String, _ error: Error) {
+        failedEndpoints.append(path)
+        guard lastErrorDetail == nil else { return }
+        let message = (error as? APIError)?.errorDescription ?? error.localizedDescription
+        lastErrorDetail = "\(message) [\(path)]"
+    }
+
     private func load<T: Decodable>(_ type: T.Type, _ path: String) async -> [T]? {
         do {
             return try await fetchList(path)
         } catch {
-            failedEndpoints.append(path)
+            recordFailure(path, error)
             return nil
         }
     }
@@ -140,7 +149,7 @@ final class LibraryStore {
         do {
             return try await fetchList("competitivetiers")
         } catch {
-            failedEndpoints.append("competitivetiers")
+            recordFailure("competitivetiers", error)
             return nil
         }
     }
@@ -150,7 +159,7 @@ final class LibraryStore {
             let response: APIResponse<GameVersion> = try await ValorantAPI.fetch("version")
             return response.data
         } catch {
-            failedEndpoints.append("version")
+            recordFailure("version", error)
             return nil
         }
     }
