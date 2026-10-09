@@ -40,7 +40,7 @@ struct MapsView: View {
         }
         .navigationTitle("Maps")
         .navigationSubtitleIfAvailable("\(store.competitiveMaps.count) in the competitive pool")
-        .searchable(text: $query, prompt: "Find a map")
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Find a map")
     }
 }
 

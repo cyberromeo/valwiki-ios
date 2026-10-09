@@ -41,7 +41,7 @@ struct ArsenalView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Arsenal")
         .navigationSubtitleIfAvailable("\(store.weapons.count) weapons · \(store.skinCount) skins")
-        .searchable(text: $query, prompt: "Find a weapon")
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Find a weapon")
         .overlay {
             if groups.isEmpty { ContentUnavailableView.search(text: query) }
         }

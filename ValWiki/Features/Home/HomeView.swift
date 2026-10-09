@@ -4,6 +4,7 @@ struct HomeView: View {
     @Environment(Store.self) private var store
     @Binding var tab: AppTab
     @State private var featuredID: String?
+    @State private var pastHero = false
 
     private var featured: Agent? {
         if let id = featuredID, let a = store.agent(id) { return a }
@@ -88,6 +89,19 @@ struct HomeView: View {
         .scrollIndicators(.hidden)
         .debugScrollAnchor()
         .ignoresSafeArea(edges: .top)
+        .onScrollGeometryChange(for: Bool.self) { geo in
+            geo.contentOffset.y + geo.contentInsets.top > 420
+        } action: { _, past in
+            withAnimation(.easeInOut(duration: 0.2)) { pastHero = past }
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            // A status-bar backdrop that appears once the hero has scrolled away.
+            Color.clear
+                .frame(height: 0)
+                .background(.bar, ignoresSafeAreaEdges: .top)
+                .opacity(pastHero ? 1 : 0)
+                .allowsHitTesting(false)
+        }
         .background(Color(.systemBackground))
         .toolbar(.hidden, for: .navigationBar)
         .refreshable { await store.load(force: true) }

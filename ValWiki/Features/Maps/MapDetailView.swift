@@ -60,9 +60,11 @@ struct MapDetailView: View {
                                         }
                                     }
                                 }
+                                .padding(.horizontal)
                                 .padding(.vertical, 2)
                             }
                         }
+                        .padding(.horizontal, -16)
 
                         MinimapView(map: map, region: region, selected: $selected, showAllLabels: false, dotSize: 9)
                             .padding(10)

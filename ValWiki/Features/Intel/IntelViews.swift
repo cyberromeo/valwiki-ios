@@ -27,6 +27,7 @@ struct RanksView: View {
             }
         }
         .navigationTitle("Ranks")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationSubtitleIfAvailable("\(store.ranks.count) tiers, Iron to Radiant")
         .task { await store.loadExtras() }
     }
@@ -77,6 +78,7 @@ struct SeasonsView: View {
             }
         }
         .navigationTitle("Episodes & Acts")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func range(_ s: Season) -> String {
@@ -117,6 +119,7 @@ struct ModesView: View {
             }
         }
         .navigationTitle("Game Modes")
+        .navigationBarTitleDisplayMode(.inline)
         .task { await store.loadExtras() }
     }
 }
@@ -156,6 +159,7 @@ struct BundlesView: View {
             .padding()
         }
         .navigationTitle("Bundles")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationSubtitleIfAvailable("\(store.bundles.count) released")
         .searchable(text: $query, prompt: "Find a bundle")
         .task { await store.loadExtras() }

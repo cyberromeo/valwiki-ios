@@ -9,6 +9,7 @@ struct WeaponDetailView: View {
 
     var body: some View {
         let skins = weapon.realSkins
+        ScrollViewReader { proxy in
         List {
             Section {
                 VStack(spacing: 14) {
@@ -110,13 +111,20 @@ struct WeaponDetailView: View {
                     NavigationLink(value: Route.skins(weapon.uuid)) {
                         Label("All \(skins.count) skins", systemImage: "square.grid.2x2.fill")
                     }
+                    .id("vw-end")
                 } header: {
                     Text("Skins")
                 }
             }
         }
         .listStyle(.insetGrouped)
-        .debugScrollAnchor()
+        .task {
+            // Screenshot runs: show the end of the page.
+            guard DebugLaunch.scroll == "bottom" else { return }
+            try? await Task.sleep(for: .seconds(1))
+            proxy.scrollTo("vw-end", anchor: .bottom)
+        }
+        }
         .navigationTitle(weapon.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedSkin) { skin in

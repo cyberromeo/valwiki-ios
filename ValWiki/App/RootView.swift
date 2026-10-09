@@ -77,7 +77,12 @@ struct MainTabs: View {
         }
         .minimizingTabBar()
         .onChange(of: tab) { _, _ in Haptics.select() }
-        .onAppear(perform: applyLaunchScreen)
+        .task {
+            // Screenshot runs only: open the requested screen once the UI has settled.
+            guard DebugLaunch.isActive else { return }
+            try? await Task.sleep(for: .seconds(0.8))
+            applyLaunchScreen()
+        }
     }
 
     /// Opens the screen named by the `-vwScreen` launch argument (screenshot runs only).

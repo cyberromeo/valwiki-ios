@@ -61,7 +61,7 @@ struct AgentsView: View {
         }
         .navigationTitle("Agents")
         .navigationSubtitleIfAvailable(subtitle)
-        .searchable(text: $query, prompt: "Find an agent")
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Find an agent")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -134,15 +134,20 @@ struct AgentCard: View {
     var height: CGFloat = 230
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            agentGradient(agent)
-            RemoteImage(link(agent.background), mode: .fill)
-                .opacity(0.2)
-            RemoteImage(agent.portrait, mode: .fill)
-                .frame(height: height * 1.35)
-                .offset(y: height * 0.12)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
+        // Fixed-size card; images ride in overlays so they can never stretch it.
+        agentGradient(agent)
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .overlay {
+                RemoteImage(link(agent.background), mode: .fill)
+                    .opacity(0.2)
+            }
+            .overlay(alignment: .top) {
+                RemoteImage(agent.portrait, mode: .fit)
+                    .frame(width: height * 1.3, height: height * 1.3)
+                    .offset(y: -height * 0.02)
+            }
+            .overlay(alignment: .bottomLeading) {
             HStack(spacing: 8) {
                 RemoteImage(link(agent.role?.displayIcon))
                     .frame(width: 14, height: 14)
@@ -161,9 +166,8 @@ struct AgentCard: View {
             .padding(.vertical, 8)
             .glassCard(cornerRadius: 16)
             .padding(8)
-        }
-        .frame(height: height)
-        .cardShape(24)
+            }
+            .cardShape(24)
         .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
