@@ -66,6 +66,13 @@ struct SkinsView: View {
         .sheet(item: $selected) { skin in
             SkinDetailSheet(skin: skin, weapon: weapon)
         }
+        .task {
+            // Screenshot runs: open a skin with variants straight away.
+            guard DebugLaunch.screen == "skin", selected == nil else { return }
+            try? await Task.sleep(for: .seconds(1.5))
+            let rich: Skin? = filtered.first(where: { (s: Skin) -> Bool in s.chromaList.count > 2 && s.levelList.count > 2 })
+            selected = rich ?? filtered.first
+        }
     }
 }
 

@@ -48,28 +48,79 @@ struct RootView: View {
 }
 
 struct MainTabs: View {
+    @Environment(Store.self) private var store
     @State private var tab: AppTab = .home
+    @State private var homePath: [Route] = []
+    @State private var agentsPath: [Route] = []
+    @State private var arsenalPath: [Route] = []
+    @State private var mapsPath: [Route] = []
+    @State private var searchPath: [Route] = []
+    @State private var appliedLaunch = false
 
     var body: some View {
         TabView(selection: $tab) {
             Tab("Home", systemImage: "house.fill", value: AppTab.home) {
-                NavigationStack { HomeView(tab: $tab).withRoutes() }
+                NavigationStack(path: $homePath) { HomeView(tab: $tab).withRoutes() }
             }
             Tab("Agents", systemImage: "person.3.fill", value: AppTab.agents) {
-                NavigationStack { AgentsView().withRoutes() }
+                NavigationStack(path: $agentsPath) { AgentsView().withRoutes() }
             }
             Tab("Arsenal", systemImage: "scope", value: AppTab.arsenal) {
-                NavigationStack { ArsenalView().withRoutes() }
+                NavigationStack(path: $arsenalPath) { ArsenalView().withRoutes() }
             }
             Tab("Maps", systemImage: "map.fill", value: AppTab.maps) {
-                NavigationStack { MapsView().withRoutes() }
+                NavigationStack(path: $mapsPath) { MapsView().withRoutes() }
             }
             Tab(value: AppTab.search, role: .search) {
-                NavigationStack { SearchView().withRoutes() }
+                NavigationStack(path: $searchPath) { SearchView().withRoutes() }
             }
         }
         .minimizingTabBar()
         .onChange(of: tab) { _, _ in Haptics.select() }
+        .onAppear(perform: applyLaunchScreen)
+    }
+
+    /// Opens the screen named by the `-vwScreen` launch argument (screenshot runs only).
+    private func applyLaunchScreen() {
+        guard !appliedLaunch, let screen = DebugLaunch.screen else { return }
+        appliedLaunch = true
+        let agentID: String? = (store.agents.first { $0.displayName == DebugLaunch.agent } ?? store.agents.first)?.uuid
+        let weaponID: String? = (store.weapons.first { $0.displayName == DebugLaunch.weapon } ?? store.weapons.first)?.uuid
+        let mapID: String? = (store.maps.first { $0.displayName == DebugLaunch.map } ?? store.maps.first)?.uuid
+        switch screen {
+        case "agents":
+            tab = .agents
+        case "agent":
+            tab = .agents
+            if let agentID { agentsPath = [.agent(agentID)] }
+        case "arsenal":
+            tab = .arsenal
+        case "weapon":
+            tab = .arsenal
+            if let weaponID { arsenalPath = [.weapon(weaponID)] }
+        case "skins", "skin":
+            tab = .arsenal
+            if let weaponID { arsenalPath = [.weapon(weaponID), .skins(weaponID)] }
+        case "maps":
+            tab = .maps
+        case "map", "mapfull":
+            tab = .maps
+            if let mapID { mapsPath = [.map(mapID)] }
+        case "search":
+            tab = .search
+        case "ranks":
+            homePath = [.ranks]
+        case "seasons":
+            homePath = [.seasons]
+        case "modes":
+            homePath = [.modes]
+        case "bundles":
+            homePath = [.bundles]
+        case "trainer":
+            homePath = [.trainer]
+        default:
+            break
+        }
     }
 }
 

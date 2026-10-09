@@ -4,7 +4,7 @@ struct MapDetailView: View {
     let map: GameMap
     @State private var region = "All"
     @State private var selected: String?
-    @State private var fullscreen = false
+    @State private var fullscreen = DebugLaunch.screen == "mapfull"
 
     private var regions: [String] {
         var seen = Set<String>()
@@ -120,6 +120,7 @@ struct MapDetailView: View {
             .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)
+        .debugScrollAnchor()
         .ignoresSafeArea(edges: .top)
         .navigationTitle(map.displayName)
         .navigationBarTitleDisplayMode(.inline)

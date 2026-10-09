@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SearchView: View {
     @Environment(Store.self) private var store
-    @State private var query = ""
+    @State private var query = DebugLaunch.query ?? ""
     @State private var selectedSkin: Skin?
 
     private var q: String { query.trimmingCharacters(in: .whitespaces) }

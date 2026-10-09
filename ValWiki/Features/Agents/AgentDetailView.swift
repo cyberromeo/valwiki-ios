@@ -132,43 +132,51 @@ struct AgentDetailView: View {
             .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)
+        .debugScrollAnchor()
         .ignoresSafeArea(edges: .top)
         .navigationTitle(agent.displayName)
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private var hero: some View {
-        ZStack(alignment: .bottomLeading) {
-            agentGradient(agent)
-            RemoteImage(link(agent.background), mode: .fit)
-                .opacity(0.25)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            RemoteImage(agent.portrait, mode: .fill)
-                .frame(height: 580)
-                .offset(y: 70)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
-            LinearGradient(colors: [.clear, .black.opacity(0.6)], startPoint: UnitPoint(x: 0.5, y: 0.5), endPoint: .bottom)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(agent.roleName.uppercased())
-                    .font(.caption.weight(.bold))
-                    .tracking(1.4)
-                    .foregroundStyle(.white.opacity(0.85))
-                Text(agent.displayName.uppercased())
-                    .font(VW.title(72))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                if let dev = agent.developerName {
-                    Text("Codename \(dev)")
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.white.opacity(0.7))
-                }
+        agentGradient(agent)
+            .frame(maxWidth: .infinity)
+            .frame(height: 500)
+            .overlay {
+                RemoteImage(link(agent.background), mode: .fit)
+                    .opacity(0.22)
+                    .padding(.top, 60)
             }
-            .padding()
-        }
-        .frame(height: 540)
-        .clipped()
+            .overlay(alignment: .bottom) {
+                RemoteImage(agent.portrait, mode: .fit)
+                    .frame(width: 480, height: 480)
+                    .offset(y: 50)
+            }
+            .overlay {
+                LinearGradient(colors: [.clear, .black.opacity(0.65)], startPoint: UnitPoint(x: 0.5, y: 0.5), endPoint: .bottom)
+            }
+            .overlay(alignment: .bottomLeading) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(agent.roleName.uppercased())
+                        .font(.caption.weight(.bold))
+                        .tracking(1.4)
+                        .foregroundStyle(.white.opacity(0.85))
+                    Text(agent.displayName.uppercased())
+                        .font(VW.title(64))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                    if let dev = agent.developerName {
+                        Text("Codename \(dev)")
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 16)
+            }
+            .clipped()
     }
 }
 

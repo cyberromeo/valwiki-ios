@@ -116,6 +116,7 @@ struct WeaponDetailView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .debugScrollAnchor()
         .navigationTitle(weapon.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedSkin) { skin in

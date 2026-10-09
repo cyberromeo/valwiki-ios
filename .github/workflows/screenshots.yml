@@ -1,0 +1,149 @@
+name: Simulator Screenshots (iPhone 14 Pro)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sim-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    name: Run on iPhone 14 Pro simulator and capture every screen
+    runs-on: macos-26
+    timeout-minutes: 50
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select newest Xcode 26
+        run: |
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC/Contents/Developer"; fi
+          xcodebuild -version
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build for the simulator
+        timeout-minutes: 25
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ValWiki.xcodeproj \
+            -target ValWiki \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO \
+            SYMROOT="$PWD/simbuild" > simbuild.log 2>&1 || { grep -E "error:" simbuild.log | sort -u | head -n 60; tail -n 40 simbuild.log; exit 1; }
+          grep -E "BUILD (SUCCEEDED|FAILED)" simbuild.log
+          find simbuild -maxdepth 3 -name "ValWiki.app" -type d
+
+      - name: Create and boot an iPhone 14 Pro
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c '
+          import json,sys
+          rs=[r for r in json.load(sys.stdin)["runtimes"] if r.get("platform","")=="iOS" and r.get("isAvailable")]
+          rs.sort(key=lambda r:[int(x) for x in r["version"].split(".")])
+          print(rs[-1]["identifier"])')
+          echo "Runtime: $RUNTIME"
+          TYPE=com.apple.CoreSimulator.SimDeviceType.iPhone-14-Pro
+          xcrun simctl list devicetypes | grep -q "iPhone-14-Pro)" || { echo "iPhone 14 Pro type missing, falling back to iPhone 15 Pro (same 393x852 screen)"; TYPE=com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro; }
+          UDID=$(xcrun simctl create "VW iPhone 14 Pro" "$TYPE" "$RUNTIME")
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl ui "$UDID" appearance dark
+          xcrun simctl status_bar "$UDID" override --time "9:41" --dataNetwork wifi --wifiBars 3 --cellularBars 4 --batteryState charged --batteryLevel 100 || true
+          xcrun simctl list devices | grep "VW iPhone"
+
+      - name: Install, launch and capture each screen
+        timeout-minutes: 20
+        run: |
+          APP=$(find simbuild -maxdepth 3 -name "ValWiki.app" -type d | head -n 1)
+          xcrun simctl install "$UDID" "$APP"
+          mkdir -p shots
+          xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'process == "ValWiki"' > shots/console.log 2>&1 &
+          LOGPID=$!
+          # Warm-up launch: lets the data feed and images load into the on-device cache.
+          xcrun simctl launch "$UDID" com.valowiki.app
+          sleep 25
+          xcrun simctl terminate "$UDID" com.valowiki.app || true
+          shoot() {
+            name="$1"; shift
+            xcrun simctl terminate "$UDID" com.valowiki.app >/dev/null 2>&1 || true
+            sleep 1
+            OUT=$(xcrun simctl launch "$UDID" com.valowiki.app "$@" 2>&1); echo "$name: $OUT"
+            PID=$(echo "$OUT" | awk -F': ' '{print $2}' | tr -d '[:space:]')
+            sleep "${WAIT:-9}"
+            xcrun simctl io "$UDID" screenshot --type=png "shots/$name.png" >/dev/null 2>&1
+            if [ -n "$PID" ] && ! ps -p "$PID" >/dev/null 2>&1; then echo "CRASH? $name: process $PID is gone" | tee -a shots/crashes.txt; fi
+          }
+          shoot 01-home             -vwScreen home
+          shoot 02-home-bottom      -vwScreen home -vwScroll bottom
+          shoot 03-agents           -vwScreen agents
+          shoot 04-agent            -vwScreen agent
+          shoot 05-agent-abilities  -vwScreen agent -vwScroll center
+          shoot 06-agent-bottom     -vwScreen agent -vwScroll bottom
+          shoot 07-arsenal          -vwScreen arsenal
+          shoot 08-weapon           -vwScreen weapon
+          shoot 09-weapon-bottom    -vwScreen weapon -vwScroll bottom
+          shoot 10-skins            -vwScreen skins
+          WAIT=12 shoot 11-skin-sheet -vwScreen skin
+          shoot 12-maps             -vwScreen maps
+          shoot 13-map              -vwScreen map
+          shoot 14-map-callouts     -vwScreen map -vwScroll center
+          shoot 15-map-fullscreen   -vwScreen mapfull
+          shoot 16-search           -vwScreen search
+          shoot 17-search-results   -vwScreen search -vwQuery Vandal
+          WAIT=12 shoot 18-ranks    -vwScreen ranks
+          shoot 19-seasons          -vwScreen seasons
+          shoot 20-trainer          -vwScreen trainer
+          WAIT=12 shoot 21-bundles  -vwScreen bundles
+          kill $LOGPID || true
+          xcrun simctl status_bar "$UDID" clear || true
+          # Crash reports, if any
+          cp ~/Library/Logs/DiagnosticReports/ValWiki* shots/ 2>/dev/null || true
+          ls -la shots
+          grep -iE "fatal|crash|exception|error" shots/console.log | head -n 40 || true
+
+      - name: Upload screenshots artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iphone14pro-screenshots
+          path: shots
+          if-no-files-found: ignore
+
+      - name: Publish to the "sim-screenshots" release
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -d shots ] || exit 0
+          cd shots
+          for f in *.png; do sips -s format jpeg -s formatOptions 80 "$f" --out "${f%.png}.jpg" >/dev/null; done
+          zip -q ../screenshots.zip *.png console.log crashes.txt *.ips 2>/dev/null || zip -q ../screenshots.zip *.png console.log
+          cd ..
+          gh release delete sim-screenshots --yes --cleanup-tag || true
+          gh release create sim-screenshots shots/*.jpg shots/console.log screenshots.zip $(ls shots/crashes.txt shots/*.ips 2>/dev/null) \
+            --title "iPhone 14 Pro simulator screenshots (run ${{ github.run_number }})" \
+            --notes "Simulator screenshots from ${{ github.sha }}." \
+            --prerelease \
+            --target ${{ github.sha }}
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-build-log
+          path: simbuild.log
+          if-no-files-found: ignore

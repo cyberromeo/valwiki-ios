@@ -60,15 +60,16 @@ struct RemoteImage: View {
     }
 
     var body: some View {
-        ZStack {
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: mode)
-                    .transition(.opacity)
+        Group {
+            if mode == .fill {
+                // A filled image must never size its parent: it takes exactly the space
+                // it is offered and crops inside it. (A bare scaledToFill image reports
+                // its full overflowing size and pushes the whole screen wider than the phone.)
+                Color.clear
+                    .overlay { layer }
+                    .clipped()
             } else {
-                placeholder
+                layer
             }
         }
         .task(id: url) {
@@ -80,6 +81,19 @@ struct RemoteImage: View {
             let loaded = await ImagePipeline.shared.image(for: url)
             if Task.isCancelled { return }
             withAnimation(.easeOut(duration: 0.25)) { image = loaded }
+        }
+    }
+
+    @ViewBuilder
+    private var layer: some View {
+        if let image {
+            Image(uiImage: image)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: mode)
+                .transition(.opacity)
+        } else {
+            placeholder
         }
     }
 }

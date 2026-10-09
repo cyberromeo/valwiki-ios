@@ -86,11 +86,12 @@ struct HomeView: View {
             .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)
+        .debugScrollAnchor()
         .ignoresSafeArea(edges: .top)
         .background(Color(.systemBackground))
         .toolbar(.hidden, for: .navigationBar)
         .refreshable { await store.load(force: true) }
-        .onAppear { if featuredID == nil { shuffle() } }
+        .onAppear { if featuredID == nil && !DebugLaunch.isActive { shuffle() } }
     }
 
     private func shuffle() {
@@ -104,63 +105,72 @@ struct FeaturedHero: View {
     var onShuffle: () -> Void
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            agentGradient(agent)
-            RemoteImage(link(agent.background), mode: .fit)
-                .opacity(0.25)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            RemoteImage(agent.portrait, mode: .fill)
-                .frame(height: 500)
-                .offset(x: 60, y: 40)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                .clipped()
-                .id(agent.uuid)
-                .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
-            LinearGradient(colors: [.clear, .black.opacity(0.55)], startPoint: UnitPoint(x: 0.5, y: 0.4), endPoint: .bottom)
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 6) {
-                    LogoMark(size: 22)
-                    Text("ValWiki").font(.headline).foregroundStyle(.white)
-                }
-                Spacer()
-                Text("Featured · \(agent.roleName)".uppercased())
-                    .font(.caption.weight(.bold))
-                    .tracking(1.2)
-                    .foregroundStyle(.white.opacity(0.85))
-                Text(agent.displayName.uppercased())
-                    .font(VW.title(64))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
-                GlassGroup(spacing: 10) {
-                    HStack(spacing: 10) {
-                        NavigationLink(value: Route.agent(agent.uuid)) {
-                            Label("Open Dossier", systemImage: "person.text.rectangle")
-                                .font(.headline)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 4)
+        // Fixed-height backdrop; every image rides in an overlay so nothing here can
+        // make the screen wider than the phone.
+        agentGradient(agent)
+            .frame(maxWidth: .infinity)
+            .frame(height: 520)
+            .overlay {
+                RemoteImage(link(agent.background), mode: .fit)
+                    .opacity(0.22)
+                    .padding(.top, 40)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                RemoteImage(agent.portrait, mode: .fit)
+                    .frame(width: 460, height: 460)
+                    .offset(x: 110, y: 36)
+                    .id(agent.uuid)
+                    .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
+            }
+            .overlay {
+                LinearGradient(colors: [.clear, .black.opacity(0.6)], startPoint: UnitPoint(x: 0.5, y: 0.35), endPoint: .bottom)
+            }
+            .overlay(alignment: .bottomLeading) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 6) {
+                        LogoMark(size: 22)
+                        Text("ValWiki").font(.headline).foregroundStyle(.white)
+                    }
+                    Spacer(minLength: 0)
+                    Text("Featured · \(agent.roleName)".uppercased())
+                        .font(.caption.weight(.bold))
+                        .tracking(1.2)
+                        .foregroundStyle(.white.opacity(0.85))
+                    Text(agent.displayName.uppercased())
+                        .font(VW.title(60))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                        .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
+                    GlassGroup(spacing: 10) {
+                        HStack(spacing: 10) {
+                            NavigationLink(value: Route.agent(agent.uuid)) {
+                                Label("Open Dossier", systemImage: "person.text.rectangle")
+                                    .font(.subheadline.weight(.semibold))
+                                    .lineLimit(1)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
+                            }
+                            .glassProminentButton()
+                            Button {
+                                Haptics.tap()
+                                onShuffle()
+                            } label: {
+                                Image(systemName: "shuffle")
+                                    .font(.subheadline.weight(.semibold))
+                                    .padding(2)
+                            }
+                            .glassButton()
+                            .accessibilityLabel("Shuffle featured agent")
                         }
-                        .glassProminentButton()
-                        Button {
-                            Haptics.tap()
-                            onShuffle()
-                        } label: {
-                            Image(systemName: "shuffle")
-                                .font(.headline)
-                                .padding(4)
-                        }
-                        .glassButton()
-                        .accessibilityLabel("Shuffle featured agent")
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                .padding(.horizontal, 20)
+                .padding(.top, 66)
+                .padding(.bottom, 20)
             }
-            .padding(.horizontal)
-            .padding(.top, 64)
-            .padding(.bottom, 20)
-        }
-        .frame(height: 540)
-        .clipped()
+            .clipped()
     }
 }
 
