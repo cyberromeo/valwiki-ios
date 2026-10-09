@@ -9,6 +9,7 @@ struct AgentDetailView: View {
         let abilities = agent.abilityList
         let neighbours = store.neighbours(of: agent)
         let mates = store.teammates(of: agent)
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 hero
@@ -128,12 +129,20 @@ struct AgentDetailView: View {
                     }
                 }
                 .padding(.horizontal)
+                .id("vw-end")
             }
             .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)
-        .debugScrollAnchor()
+        .defaultScrollAnchor(DebugLaunch.scroll == "center" ? .center : nil)
         .ignoresSafeArea(edges: .top)
+        .task {
+            // Screenshot runs: scroll to the end the way a finger would.
+            guard DebugLaunch.scroll == "bottom" else { return }
+            try? await Task.sleep(for: .seconds(1))
+            withAnimation { proxy.scrollTo("vw-end", anchor: .bottom) }
+        }
+        }
         .navigationTitle(agent.displayName)
         .navigationBarTitleDisplayMode(.inline)
     }

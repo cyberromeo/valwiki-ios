@@ -39,9 +39,18 @@ struct SeasonsView: View {
     private var episodes: [Grouped<Season>] {
         let acts = store.seasons.filter { $0.isAct }
         let parents = store.seasons.filter { s in !s.isAct && s.parentUuid == nil && acts.contains { $0.parentUuid == s.uuid } }
+        // The feed can name two episodes the same (e.g. two "V26" halves), so repeated
+        // names get their date span to tell them apart.
+        var nameCount: [String: Int] = [:]
+        for p in parents { nameCount[p.displayName ?? p.uuid, default: 0] += 1 }
         return parents
             .sorted { ($0.start ?? .distantPast) > ($1.start ?? .distantPast) }
-            .map { p in Grouped(title: p.displayName ?? p.uuid, items: acts.filter { $0.parentUuid == p.uuid }.sorted { ($0.start ?? .distantPast) < ($1.start ?? .distantPast) }) }
+            .map { p in
+                let name: String = p.displayName ?? p.uuid
+                let title: String = (nameCount[name] ?? 0) > 1 ? "\(name) · \(range(p))" : name
+                let items: [Season] = acts.filter { $0.parentUuid == p.uuid }.sorted { ($0.start ?? .distantPast) < ($1.start ?? .distantPast) }
+                return Grouped(title: title, items: items)
+            }
     }
 
     var body: some View {
