@@ -87,7 +87,7 @@ jobs:
           gh release delete latest-build --yes --cleanup-tag || true
           gh release create latest-build ValWiki-unsigned.ipa \
             --title "ValWiki build ${{ github.run_number }}" \
-            --notes "Unsigned IPA built from ${{ github.sha }}. Sideload it with AltStore, SideStore, Sideloadly or TrollStore." \
+            --notes "Unsigned IPA built from ${{ github.sha }}. Sideload it with Sideloadly, AltStore or SideStore (iOS 18+)." \
             --prerelease \
             --target ${{ github.sha }}
 

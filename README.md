@@ -28,7 +28,7 @@ Every push to `main` runs **Build Unsigned IPA** on GitHub Actions (Xcode 26). I
 
 ## Install the unsigned IPA
 
-The IPA is not signed, so install it with a sideloading tool that signs it with your own Apple ID: **Sideloadly** or **AltStore / SideStore** (a free Apple ID re-signs for 7 days), or **TrollStore** on supported iOS versions.
+The IPA is not signed, so install it with a sideloading tool that signs it with your own Apple ID: **Sideloadly** (from a Mac or PC) or **AltStore / SideStore**. With a free Apple ID the app has to be re-signed every 7 days. On iOS 16+ turn on Settings → Privacy & Security → Developer Mode the first time. TrollStore is not an option: the app needs iOS 18+, which TrollStore doesn't support.
 
 The previous version of this app is on the `pre-redesign-backup` branch.
 
