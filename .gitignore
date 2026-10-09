@@ -2,18 +2,17 @@
 .DS_Store
 **/.DS_Store
 
-# Xcode
+# Xcode (the project is generated from project.yml by XcodeGen)
+*.xcodeproj
 xcuserdata/
 *.xcuserstate
 DerivedData/
 build/
+Payload/
 *.ipa
 *.dSYM.zip
-swiftpm/
+build.log
 
-# Swift Playgrounds / SPM
+# SPM
 .build/
 Package.resolved
-
-# Local drafts
-_archive_old_draft/
