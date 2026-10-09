@@ -14,9 +14,10 @@ struct SkinsView: View {
     }
 
     private var filtered: [Skin] {
-        weapon.realSkins.filter { s in
-            (edition == "All" || s.contentTierUuid == edition) &&
-            (query.isEmpty || s.displayName.localizedCaseInsensitiveContains(query))
+        weapon.realSkins.filter { (s: Skin) -> Bool in
+            let editionOK: Bool = edition == "All" || s.contentTierUuid == edition
+            let queryOK: Bool = query.isEmpty || s.displayName.localizedCaseInsensitiveContains(query)
+            return editionOK && queryOK
         }
     }
 
@@ -102,8 +103,8 @@ struct SkinTile: View {
     }
 
     private var tierColor: Color {
-        if let hex = tier?.highlightColor { return Color(hex: String(hex.prefix(6))) }
-        return .gray
+        guard let hex = tier?.highlightColor else { return .gray }
+        return hexColor(hex)
     }
 }
 
@@ -138,7 +139,7 @@ struct SkinDetailSheet: View {
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .glassCapsule(tint: Color(hex: String((tier.highlightColor ?? "888888").prefix(6))).opacity(0.5))
+                            .glassCapsule(tint: hexColor(tier.highlightColor).opacity(0.5))
                         }
                     }
                     .padding(.vertical, 8)
@@ -164,8 +165,7 @@ struct SkinDetailSheet: View {
                                         .frame(width: 54, height: 54)
                                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                .stroke(index == chromaIndex ? VW.red : Color.secondary.opacity(0.3), lineWidth: index == chromaIndex ? 3 : 1)
+                                            ChromaRing(selected: index == chromaIndex)
                                         )
                                     }
                                     .buttonStyle(.plain)
@@ -247,6 +247,16 @@ struct SkinDetailSheet: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+    }
+}
+
+struct ChromaRing: View {
+    let selected: Bool
+
+    var body: some View {
+        let color: Color = selected ? VW.red : Color.secondary.opacity(0.3)
+        let width: CGFloat = selected ? 3 : 1
+        RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(color, lineWidth: width)
     }
 }
 

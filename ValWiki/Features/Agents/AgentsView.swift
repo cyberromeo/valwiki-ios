@@ -6,15 +6,24 @@ struct AgentsView: View {
     @State private var query = ""
 
     private var roles: [String] {
-        let present = Set(store.agents.map { $0.roleName })
-        return ["All"] + Store.roleOrder.filter { present.contains($0) } + present.subtracting(Store.roleOrder).sorted()
+        let present: Set<String> = Set(store.agents.map { $0.roleName })
+        let known: [String] = Store.roleOrder.filter { present.contains($0) }
+        let other: [String] = present.subtracting(Store.roleOrder).sorted()
+        return ["All"] + known + other
     }
 
     private var filtered: [Agent] {
-        store.agents.filter { a in
-            (role == "All" || a.roleName == role) &&
-            (query.isEmpty || a.displayName.localizedCaseInsensitiveContains(query) || a.roleName.localizedCaseInsensitiveContains(query))
+        store.agents.filter { (a: Agent) -> Bool in
+            let roleOK: Bool = role == "All" || a.roleName == role
+            if !roleOK { return false }
+            if query.isEmpty { return true }
+            return a.displayName.localizedCaseInsensitiveContains(query) || a.roleName.localizedCaseInsensitiveContains(query)
         }
+    }
+
+    private var subtitle: String {
+        let which: String = role == "All" ? "every role" : role + "s"
+        return "\(filtered.count) of \(store.agents.count) · \(which)"
     }
 
     var body: some View {
@@ -51,7 +60,7 @@ struct AgentsView: View {
             .padding(.vertical, 8)
         }
         .navigationTitle("Agents")
-        .navigationSubtitleIfAvailable("\(filtered.count) of \(store.agents.count) · \(role == "All" ? "every role" : role + "s")")
+        .navigationSubtitleIfAvailable(subtitle)
         .searchable(text: $query, prompt: "Find an agent")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

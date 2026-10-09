@@ -23,8 +23,9 @@ struct AimTrainerView: View {
     }
 
     private var targetSize: CGFloat {
-        let progress = 1 - timeLeft / roundLength
-        return CGFloat(64 - progress * 30)
+        let progress: Double = 1 - timeLeft / roundLength
+        let size: Double = 64 - progress * 30
+        return CGFloat(size)
     }
 
     var body: some View {

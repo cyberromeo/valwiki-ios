@@ -36,6 +36,7 @@ jobs:
           echo "CURRENT_PROJECT_VERSION=${{ github.run_number }}"
 
       - name: Build (unsigned, device)
+        timeout-minutes: 20
         run: |
           set +e
           xcodebuild \
@@ -47,7 +48,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            VALIDATE_PRODUCT=NO > build.log 2>&1
+            VALIDATE_PRODUCT=NO \
+            OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -solver-expression-time-threshold=45 -Xfrontend -warn-long-expression-type-checking=800' > build.log 2>&1
           STATUS=$?
           grep -E "BUILD (SUCCEEDED|FAILED)" build.log
           if [ $STATUS -ne 0 ]; then
@@ -88,6 +90,17 @@ jobs:
             --notes "Unsigned IPA built from ${{ github.sha }}. Sideload it with AltStore, SideStore, Sideloadly or TrollStore." \
             --prerelease \
             --target ${{ github.sha }}
+
+      - name: Report where a stalled build stopped
+        if: failure()
+        run: |
+          [ -f build.log ] || exit 0
+          grep -E "error:|warning: (instance method|getter|expression|global function).*took" build.log | sed "s#$GITHUB_WORKSPACE/##g" | sort -u | head -n 40 > slow.txt || true
+          tail -n 25 build.log | sed "s#$GITHUB_WORKSPACE/##g" > tail.txt
+          for f in slow.txt tail.txt; do
+            msg=$(awk 'BEGIN{ORS="%0A"} {gsub(/%/,"%25"); gsub(/\r/,""); print substr($0,1,300)}' "$f")
+            [ -n "$msg" ] && echo "::warning title=$f::$msg"
+          done
 
       - name: Upload build log
         if: always()

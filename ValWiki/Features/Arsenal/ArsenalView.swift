@@ -5,18 +5,31 @@ struct ArsenalView: View {
     @State private var query = ""
 
     private var groups: [Grouped<Weapon>] {
-        let list = store.weapons.filter { query.isEmpty || $0.displayName.localizedCaseInsensitiveContains(query) || $0.categoryName.localizedCaseInsensitiveContains(query) }
-        let cats = Store.categoryOrder + Set(list.map { $0.categoryName }).subtracting(Store.categoryOrder).sorted()
+        let list: [Weapon] = store.weapons.filter { (w: Weapon) -> Bool in
+            if query.isEmpty { return true }
+            return w.displayName.localizedCaseInsensitiveContains(query) || w.categoryName.localizedCaseInsensitiveContains(query)
+        }
+        let extra: [String] = Set(list.map { $0.categoryName }).subtracting(Store.categoryOrder).sorted()
+        let cats: [String] = Store.categoryOrder + extra
         return cats.compactMap { cat in
             let items = list.filter { $0.categoryName == cat }
             return items.isEmpty ? nil : Grouped(title: cat, items: items)
         }
     }
 
+    static func plural(_ category: String) -> String {
+        switch category {
+        case "SMG": return "SMGs"
+        case "Heavy": return "Heavies"
+        case "Melee": return "Melee"
+        default: return category + "s"
+        }
+    }
+
     var body: some View {
         List {
             ForEach(groups) { group in
-                Section(group.title == "SMG" ? "SMGs" : group.title == "Heavy" ? "Heavies" : group.title + (group.title == "Melee" ? "" : "s")) {
+                Section(Self.plural(group.title)) {
                     ForEach(group.items) { weapon in
                         NavigationLink(value: Route.weapon(weapon.uuid)) {
                             WeaponRow(weapon: weapon)

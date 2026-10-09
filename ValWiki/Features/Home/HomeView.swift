@@ -201,12 +201,14 @@ struct ActCard: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             if let act, let start = act.start, let end = act.end {
-                let total = max(end.timeIntervalSince(start), 1)
-                let done = min(max(Date().timeIntervalSince(start) / total, 0), 1)
-                let days = max(0, Int(ceil(end.timeIntervalSinceNow / 86_400)))
+                let total: Double = max(end.timeIntervalSince(start), 1)
+                let elapsed: Double = Date().timeIntervalSince(start) / total
+                let done: Double = min(max(elapsed, 0), 1)
+                let days: Int = max(0, Int(ceil(end.timeIntervalSinceNow / 86_400)))
+                let caption: String = "\(episode?.displayName ?? "") · \(days) day\(days == 1 ? "" : "s") left"
                 ProgressView(value: done)
                     .tint(VW.red)
-                Text("\(episode?.displayName ?? "") · \(days) day\(days == 1 ? "" : "s") left")
+                Text(caption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

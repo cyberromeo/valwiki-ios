@@ -292,13 +292,22 @@ struct GameMap: Decodable, Identifiable {
     var id: String { uuid }
     var isCompetitive: Bool { (tacticalDescription ?? "").localizedCaseInsensitiveContains("site") }
     var calloutList: [Callout] { callouts?.items ?? [] }
-    var hasMinimap: Bool { link(displayIcon) != nil && !calloutList.isEmpty && (xMultiplier?.value ?? 0) != 0 }
+    var hasMinimap: Bool {
+        let mult: Double = xMultiplier?.value ?? 0
+        return link(displayIcon) != nil && !calloutList.isEmpty && mult != 0
+    }
 
     /// Callout world position -> 0...1 position on the minimap image.
     func normalized(_ c: Callout) -> CGPoint {
-        let x = (c.location?.y ?? 0) * (xMultiplier?.value ?? 0) + (xScalarToAdd?.value ?? 0)
-        let y = (c.location?.x ?? 0) * (yMultiplier?.value ?? 0) + (yScalarToAdd?.value ?? 0)
-        return CGPoint(x: x, y: y)
+        let worldX: Double = c.location?.x ?? 0
+        let worldY: Double = c.location?.y ?? 0
+        let xm: Double = xMultiplier?.value ?? 0
+        let ym: Double = yMultiplier?.value ?? 0
+        let xa: Double = xScalarToAdd?.value ?? 0
+        let ya: Double = yScalarToAdd?.value ?? 0
+        let u: Double = worldY * xm + xa
+        let v: Double = worldX * ym + ya
+        return CGPoint(x: u, y: v)
     }
 }
 

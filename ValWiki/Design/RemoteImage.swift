@@ -34,7 +34,8 @@ actor ImagePipeline {
         let image = await task.value
         inFlight[url] = nil
         if let image {
-            let cost = Int(image.size.width * image.size.height * image.scale * image.scale * 4)
+            let pixels: CGFloat = image.size.width * image.size.height * image.scale * image.scale
+            let cost: Int = Int(pixels) * 4
             imageMemoryCache.setObject(image, forKey: url as NSURL, cost: cost)
         }
         return image

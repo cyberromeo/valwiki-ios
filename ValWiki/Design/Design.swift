@@ -127,6 +127,12 @@ func agentGradient(_ agent: Agent) -> LinearGradient {
     return LinearGradient(colors: stops, startPoint: .topLeading, endPoint: .bottomTrailing)
 }
 
+/// Colour from an API hex string (RRGGBB or RRGGBBAA), ignoring alpha.
+func hexColor(_ s: String?, fallback: String = "888888") -> Color {
+    let raw: String = s ?? fallback
+    return Color(hex: String(raw.prefix(6)))
+}
+
 func formatNumber(_ v: Double, decimals: Int = 0) -> String {
     if decimals == 0 || v.rounded() == v { return String(Int(v.rounded())) }
     return String(format: "%.\(decimals)f", v)

@@ -9,8 +9,14 @@ struct MapDetailView: View {
     private var regions: [String] {
         var seen = Set<String>()
         let names = map.calloutList.compactMap { $0.superRegionName }.filter { seen.insert($0).inserted }
-        let order = ["A", "Mid", "B", "C", "Attacker Side", "Defender Side"]
-        return ["All"] + names.sorted { (order.firstIndex(of: $0) ?? 50, $0) < (order.firstIndex(of: $1) ?? 50, $1) }
+        let order: [String] = ["A", "Mid", "B", "C", "Attacker Side", "Defender Side"]
+        let sorted: [String] = names.sorted { (l: String, r: String) -> Bool in
+            let li: Int = order.firstIndex(of: l) ?? 50
+            let ri: Int = order.firstIndex(of: r) ?? 50
+            if li != ri { return li < ri }
+            return l < r
+        }
+        return ["All"] + sorted
     }
 
     private var grouped: [Grouped<Callout>] {
@@ -95,7 +101,7 @@ struct MapDetailView: View {
                                                     .foregroundStyle(selected == c.id ? Color.white : Color.primary)
                                                     .padding(.horizontal, 10)
                                                     .padding(.vertical, 6)
-                                                    .background(selected == c.id ? AnyShapeStyle(VW.red) : AnyShapeStyle(Color(.tertiarySystemFill)), in: Capsule())
+                                                    .background(Capsule().fill(selected == c.id ? VW.red : Color(.tertiarySystemFill)))
                                             }
                                             .buttonStyle(.plain)
                                         }
@@ -164,14 +170,16 @@ struct MinimapView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let side = min(geo.size.width, geo.size.height)
+            let side: CGFloat = min(geo.size.width, geo.size.height)
             ZStack(alignment: .topLeading) {
                 RemoteImage(link(map.displayIcon))
                     .frame(width: side, height: side)
                 ForEach(map.calloutList) { c in
-                    let p = map.normalized(c)
-                    let isOn = region == "All" || c.superRegionName == region
-                    let isSelected = selected == c.id
+                    let p: CGPoint = map.normalized(c)
+                    let isOn: Bool = region == "All" || c.superRegionName == region
+                    let isSelected: Bool = selected == c.id
+                    let px: CGFloat = p.x * side
+                    let py: CGFloat = p.y * side
                     CalloutPin(
                         name: c.regionName ?? "",
                         active: isOn,
@@ -183,7 +191,7 @@ struct MinimapView: View {
                         Haptics.select()
                         withAnimation(.snappy) { selected = isSelected ? nil : c.id }
                     }
-                    .position(x: p.x * side, y: p.y * side)
+                    .position(x: px, y: py)
                 }
             }
             .frame(width: side, height: side)
@@ -200,17 +208,22 @@ struct CalloutPin: View {
     let dotSize: CGFloat
 
     var body: some View {
+        let fill: Color = selected ? VW.red : (active ? VW.teal : Color.gray.opacity(0.5))
+        let d: CGFloat = selected ? dotSize * 1.6 : dotSize
+        let fontSize: CGFloat = selected ? 12 : 9
+        let alpha: Double = (active || selected) ? 1 : 0.35
+        let z: Double = selected ? 2 : (showLabel ? 1 : 0)
         ZStack {
             Circle()
-                .fill(selected ? VW.red : (active ? VW.teal : Color.gray.opacity(0.5)))
-                .frame(width: selected ? dotSize * 1.6 : dotSize, height: selected ? dotSize * 1.6 : dotSize)
+                .fill(fill)
+                .frame(width: d, height: d)
                 .overlay(Circle().stroke(.white.opacity(0.9), lineWidth: 1.2))
                 .shadow(color: .black.opacity(0.4), radius: 2)
                 .frame(width: 30, height: 30)
                 .contentShape(Circle())
             if showLabel {
                 Text(name)
-                    .font(.system(size: selected ? 12 : 9, weight: .semibold))
+                    .font(.system(size: fontSize, weight: .semibold))
                     .fixedSize()
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
@@ -219,8 +232,8 @@ struct CalloutPin: View {
                     .allowsHitTesting(false)
             }
         }
-        .opacity(active || selected ? 1 : 0.35)
-        .zIndex(selected ? 2 : (showLabel ? 1 : 0))
+        .opacity(alpha)
+        .zIndex(z)
     }
 }
 

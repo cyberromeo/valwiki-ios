@@ -20,7 +20,7 @@ struct RanksView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .glassCard(cornerRadius: 20, tint: Color(hex: String((rank.color ?? "888888").prefix(6))).opacity(0.25))
+                        .glassCard(cornerRadius: 20, tint: hexColor(rank.color).opacity(0.25))
                     }
                 }
                 .padding()

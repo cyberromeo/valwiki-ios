@@ -41,12 +41,9 @@ struct WeaponDetailView: View {
 
             if let s = stats {
                 Section("Handling") {
-                    StatGaugeRow(title: "Fire rate", value: s.fireRate?.value ?? 0, max: 16, display: formatNumber(s.fireRate?.value ?? 0, decimals: 2) + " /s", icon: "speedometer")
-                    StatGaugeRow(title: "Magazine", value: s.magazineSize?.value ?? 0, max: 100, display: formatNumber(s.magazineSize?.value ?? 0), icon: "rectangle.stack.fill")
-                    StatGaugeRow(title: "Reload", value: s.reloadTimeSeconds?.value ?? 0, max: 5, display: formatNumber(s.reloadTimeSeconds?.value ?? 0, decimals: 2) + " s", icon: "arrow.triangle.2.circlepath")
-                    StatGaugeRow(title: "Equip", value: s.equipTimeSeconds?.value ?? 0, max: 1.5, display: formatNumber(s.equipTimeSeconds?.value ?? 0, decimals: 2) + " s", icon: "hand.raised.fill")
-                    StatGaugeRow(title: "Run speed", value: (s.runSpeedMultiplier?.value ?? 0) * 100, max: 100, display: formatNumber((s.runSpeedMultiplier?.value ?? 0) * 100) + "%", icon: "figure.run")
-                    StatGaugeRow(title: "First-shot spread", value: s.firstBulletAccuracy?.value ?? 0, max: 5, display: formatNumber(s.firstBulletAccuracy?.value ?? 0, decimals: 2) + "°", icon: "scope")
+                    ForEach(handling(s)) { row in
+                        StatGaugeRow(title: row.title, value: row.value, max: row.max, display: row.display, icon: row.icon)
+                    }
                     if let wall = s.wallPenetration {
                         LabeledContent("Wall penetration") {
                             Text(enumTail(wall))
@@ -80,11 +77,12 @@ struct WeaponDetailView: View {
                             .foregroundStyle(.secondary)
                             Divider()
                             ForEach(ranges) { r in
+                                let cells: [String] = damageCells(r)
                                 GridRow {
-                                    Text("\(formatNumber(r.rangeStartMeters?.value ?? 0))–\(formatNumber(r.rangeEndMeters?.value ?? 0)) m")
-                                    Text(formatNumber(r.headDamage?.value ?? 0, decimals: 1)).foregroundStyle(VW.red).bold()
-                                    Text(formatNumber(r.bodyDamage?.value ?? 0, decimals: 1))
-                                    Text(formatNumber(r.legDamage?.value ?? 0, decimals: 1)).foregroundStyle(.secondary)
+                                    Text(cells[0])
+                                    Text(cells[1]).foregroundStyle(VW.red).bold()
+                                    Text(cells[2])
+                                    Text(cells[3]).foregroundStyle(.secondary)
                                 }
                                 .monospacedDigit()
                             }
@@ -126,6 +124,32 @@ struct WeaponDetailView: View {
     }
 }
 
+struct HandlingRow: Identifiable {
+    let title: String
+    let value: Double
+    let max: Double
+    let display: String
+    let icon: String
+    var id: String { title }
+}
+
+func handling(_ s: WeaponStats) -> [HandlingRow] {
+    let fire: Double = s.fireRate?.value ?? 0
+    let mag: Double = s.magazineSize?.value ?? 0
+    let reload: Double = s.reloadTimeSeconds?.value ?? 0
+    let equip: Double = s.equipTimeSeconds?.value ?? 0
+    let run: Double = (s.runSpeedMultiplier?.value ?? 0) * 100
+    let spread: Double = s.firstBulletAccuracy?.value ?? 0
+    var rows: [HandlingRow] = []
+    rows.append(HandlingRow(title: "Fire rate", value: fire, max: 16, display: formatNumber(fire, decimals: 2) + " /s", icon: "speedometer"))
+    rows.append(HandlingRow(title: "Magazine", value: mag, max: 100, display: formatNumber(mag), icon: "rectangle.stack.fill"))
+    rows.append(HandlingRow(title: "Reload", value: reload, max: 5, display: formatNumber(reload, decimals: 2) + " s", icon: "arrow.triangle.2.circlepath"))
+    rows.append(HandlingRow(title: "Equip", value: equip, max: 1.5, display: formatNumber(equip, decimals: 2) + " s", icon: "hand.raised.fill"))
+    rows.append(HandlingRow(title: "Run speed", value: run, max: 100, display: formatNumber(run) + "%", icon: "figure.run"))
+    rows.append(HandlingRow(title: "First-shot spread", value: spread, max: 5, display: formatNumber(spread, decimals: 2) + "°", icon: "scope"))
+    return rows
+}
+
 struct StatGaugeRow: View {
     let title: String
     let value: Double
@@ -142,7 +166,8 @@ struct StatGaugeRow: View {
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
-            Gauge(value: Swift.min(Swift.max(value, 0), max), in: 0...max) {
+            let clamped: Double = Swift.min(Swift.max(value, 0), max)
+            Gauge(value: clamped, in: 0...max) {
                 EmptyView()
             }
             .gaugeStyle(.accessoryLinearCapacity)
@@ -150,4 +175,13 @@ struct StatGaugeRow: View {
         }
         .padding(.vertical, 2)
     }
+}
+
+func damageCells(_ range: DamageRange) -> [String] {
+    let start: String = formatNumber(range.rangeStartMeters?.value ?? 0)
+    let end: String = formatNumber(range.rangeEndMeters?.value ?? 0)
+    let head: String = formatNumber(range.headDamage?.value ?? 0, decimals: 1)
+    let torso: String = formatNumber(range.bodyDamage?.value ?? 0, decimals: 1)
+    let legs: String = formatNumber(range.legDamage?.value ?? 0, decimals: 1)
+    return ["\(start)–\(end) m", head, torso, legs]
 }

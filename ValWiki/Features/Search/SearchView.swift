@@ -7,13 +7,42 @@ struct SearchView: View {
 
     private var q: String { query.trimmingCharacters(in: .whitespaces) }
 
+    private struct Results {
+        var agents: [Agent] = []
+        var weapons: [Weapon] = []
+        var maps: [GameMap] = []
+        var skins: [Skin] = []
+        var bundles: [StoreBundle] = []
+        var isEmpty: Bool { agents.isEmpty && weapons.isEmpty && maps.isEmpty && skins.isEmpty && bundles.isEmpty }
+    }
+
+    private var results: Results {
+        let text = q
+        var out = Results()
+        if text.isEmpty { return out }
+        out.agents = store.agents.filter { (a: Agent) -> Bool in
+            a.displayName.localizedCaseInsensitiveContains(text) || a.roleName.localizedCaseInsensitiveContains(text)
+        }
+        out.weapons = store.weapons.filter { (w: Weapon) -> Bool in
+            w.displayName.localizedCaseInsensitiveContains(text) || w.categoryName.localizedCaseInsensitiveContains(text)
+        }
+        out.maps = store.maps.filter { (m: GameMap) -> Bool in m.displayName.localizedCaseInsensitiveContains(text) }
+        if text.count >= 2 {
+            let matched: [Skin] = store.allSkins.filter { (s: Skin) -> Bool in s.displayName.localizedCaseInsensitiveContains(text) }
+            out.skins = Array(matched.prefix(60))
+            out.bundles = store.bundles.filter { (b: StoreBundle) -> Bool in (b.displayName ?? "").localizedCaseInsensitiveContains(text) }
+        }
+        return out
+    }
+
     var body: some View {
-        let agents = q.isEmpty ? [] : store.agents.filter { $0.displayName.localizedCaseInsensitiveContains(q) || $0.roleName.localizedCaseInsensitiveContains(q) }
-        let weapons = q.isEmpty ? [] : store.weapons.filter { $0.displayName.localizedCaseInsensitiveContains(q) || $0.categoryName.localizedCaseInsensitiveContains(q) }
-        let maps = q.isEmpty ? [] : store.maps.filter { $0.displayName.localizedCaseInsensitiveContains(q) }
-        let skins = q.count < 2 ? [] : Array(store.allSkins.filter { $0.displayName.localizedCaseInsensitiveContains(q) }.prefix(60))
-        let bundles = q.count < 2 ? [] : store.bundles.filter { ($0.displayName ?? "").localizedCaseInsensitiveContains(q) }
-        let nothing = agents.isEmpty && weapons.isEmpty && maps.isEmpty && skins.isEmpty && bundles.isEmpty
+        let r = results
+        let agents: [Agent] = r.agents
+        let weapons: [Weapon] = r.weapons
+        let maps: [GameMap] = r.maps
+        let skins: [Skin] = r.skins
+        let bundles: [StoreBundle] = r.bundles
+        let nothing: Bool = r.isEmpty
 
         List {
             if q.isEmpty {
@@ -47,7 +76,7 @@ struct SearchView: View {
                 Section("Weapons") {
                     ForEach(weapons) { w in
                         NavigationLink(value: Route.weapon(w.uuid)) {
-                            ResultRow(image: link(w.displayIcon), title: w.displayName, subtitle: w.categoryName + (w.cost > 0 ? " · \(w.cost) credits" : ""), wide: true)
+                            ResultRow(image: link(w.displayIcon), title: w.displayName, subtitle: w.cost > 0 ? "\(w.categoryName) · \(w.cost) credits" : w.categoryName, wide: true)
                         }
                     }
                 }
